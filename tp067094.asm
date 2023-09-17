@@ -138,9 +138,9 @@ SOLDITEM  dw 3,7,6,2,3,13,1,3,10,20,'$' ; Random values for generating report
 ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, 439, '$'
 
 .code ; the start of the code section in an assembly program
-; What is MACRO? - A macro is a sequence of instructions that is assigned a name and can be used multiple times in a program.
+; Macro is a sequence of instructions that is assigned a name and can be used multiple times in a program.
 ShowMsg MACRO Msg ; Msg - Parameter
-    lea  dx, Msg ; load the address of the Msg parameter into the dx register | dx is often used for storing the memory address of strings
+    lea  dx, Msg ; load effective address of the Msg parameter into the dx register | dx is often used for storing the memory address of strings
     mov  ah, 9 ; display a string of characters on the screen
     int  21h ; int 21h is a software interrupt that invokes the DOS operating system to perform a specific task
 ENDM ; marks the end of the macro definition  
@@ -734,17 +734,17 @@ GenerateNewLine:
 
 ; Main Function
 ; what is MAIN PROC? - MAIN PROC is a function that is called when the program is executed.
-MAIN PROC
-    mov ax, @Data ; loads the address of the data segment into the ax register
-    mov ds, ax ; ds is a segment register that contains the starting address of the data segment
+main proc
+    mov ax, @Data ; loads the address of the data segment into the ax register | @Data represents the starting address of the data segment
+    mov ds, ax ; ensures that data accesses within the program use the correct segment
 
     main_loop:
         call ClearScreen
         call DisplayMenu
-        mov ah, 01h ; read a single character from the keyboard
+        mov ah, 01h ; read a single character from the keyboard | why ah? It's reserved for passing the function code to the interrupt service
         int 21h
 
-        cmp al, '1'
+        cmp al, '1' ; why al ? the ASCII values of characters '1' through '6' reside in the lower 8 bits (bits 0-7) of the AL register
         je InventoryMenu
         cmp al, '2'
         je CategoryMenu
@@ -762,6 +762,6 @@ MAIN PROC
         ShowMsg CRLF
         call ReturnToMenu
         jmp main_loop
-        
-MAIN ENDP
-END MAIN
+
+main endp
+end main
