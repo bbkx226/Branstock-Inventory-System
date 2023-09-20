@@ -385,18 +385,18 @@ Computers:
 ViewItem:
     ShowMsg INVENTORY_HEADER  ; Display the inventory header message
 
-    xor bp, bp               ; Initialize the base pointer (bp) to 0
-    lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
+    xor bp, bp               ; Initialize the base pointer (bp) to 0 | Equals to mov bp, 0
+    lea si, INVENTORY        ; Load the address of the INVENTORY data structure into si
 
     LoopStart:
-        mov ax, [si]         ; Load the inventory ID into ax
+        mov ax, [si]          ; The square brackets are used to dereference the pointer, which means that the value at the memory address pointed to by the pointer is loaded into the ax register.
         cmp ax, 10            ; Compare the ID with 10
         ja done               ; Jump to 'done' if ID is greater than 10
         
-        call IntegerConversion        ; Call a subroutine to print the inventory ID
+        call IntegerConversion  ; Call a subroutine to print the inventory ID
         call GenerateTab        ; Call a subroutine to print a tab character
 
-        mov dx, offset INVENTORY + 20  ; skip the first 20 bytes, which includes the IDs
+        mov dx, offset INVENTORY + 20  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
         
@@ -632,9 +632,9 @@ ReturnToMenu:
 ClearScreen: ; Function to clear the screen
     mov ah, 06h ; scroll the screen up
     mov al, 0 ; clear the entire screen
-    mov bh, 07h ; display attribute (white on black)
+    mov bh, 07h ; di    splay attribute (white on black)
     mov cx, 0 ; upper left corner (row 0, column 0)
-    mov dx, 184Fh ; lower right corner (row 24, column 79)
+    mov dx, 184Fh ; lower right corner (row (18 hex) 24 dec, column (4F hex) 79 dec)
     int 10h ; call interrupt 10h to scroll the screen up
     ret
 
@@ -676,9 +676,9 @@ PrintRedBlink:
 
 IntegerConversion:
   ; converts a 16-bit integer value in the ax register to its corresponding ASCII string representation and then prints that string
-  push bx ; save BX on the stack
+  push bx ; why push? - to save the value of the bx register onto the stack, to ensure that the bx register is not overwritten by the subroutine
   mov bx, 10 ; set BX to 10 (divisor), converting the integer to a decimal representation
-  xor cx, cx ; clear CX (counter), used as a counter to keep track of the number of digits in the converted integer
+  xor cx, cx ; why clear cx? - to ensure that the counter is clear before performing the division operation
 
   LoopForConversion:
     xor dx, dx ; clear the high byte of DX, to ensure that dx is clear before performing the division operation
@@ -700,15 +700,13 @@ IntegerConversion:
     ret
 
 GenerateTab:
-  mov dl, 09 ; ASCII value for tab
-  mov ah, 02 ; write character
+  mov dl, 09 ; dl is often used for storing the ASCII value of a tab character | ASCII value of tab character is 09
+  mov ah, 02
   int 21h
   ret
 
 PrintString:
-  ; Print a string of characters
-  ; Input: CX = length of string, DX = offset of string
-  push ax ; save registers
+  push ax
   push bx
   push cx
   mov bx, dx ; set BX to the offset of the string
@@ -733,10 +731,10 @@ GenerateNewLine:
   ret
 
 ; Main Function
-; what is MAIN PROC? - MAIN PROC is a function that is called when the program is executed.
+; MAIN PROC is a function that is called when the program is executed.
 main proc
-    mov ax, @Data ; loads the address of the data segment into the ax register | @Data represents the starting address of the data segment
-    mov ds, ax ; ensures that data accesses within the program use the correct segment
+    mov ax, @Data ; ax is the only register that can be used to load the segment register | @Data represents the starting address of the data segment
+    mov ds, ax ; ds register ensures that data accesses within the program use the correct segment
 
     main_loop:
         call ClearScreen
