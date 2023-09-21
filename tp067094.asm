@@ -445,8 +445,8 @@ SellItem:
     ja InvalidInputForSell
 
     sub al, 30h ; The ASCII values corresponding to the characters '0' through '9' are '30H' through '39H'. To obtain the numerical values 0 through 9, you simply subtract '30H' from their respective ASCII values.
-    add al, al ; Multiply the value by 2 to convert it to an index, but why?
-    sub ax, 136 ; Subtract 136 from the value to convert it to an index
+    add al, al ; convert it into an offset or index that can be used to access the corresponding item in the INVENTORY array
+    sub ax, 136 ; Subtract 136 from the value to convert it to an index ( 256 + CHOICE - 136)
     mov StockID, ax
 
     ShowMsg SELL_QUANTITY_MSG
@@ -463,7 +463,7 @@ SellItem:
     cmp bx, 0
     js SellError ; If the quantity entered is greater than the quantity in stock, the code jumps to the SellError label | js is a conditional jump instruction that jumps if the sign flag is set (SF = 1)
 
-    mov word ptr [si], bx ; what is word? - word is a directive that tells the assembler to reserve 2 bytes of memory for each value in the list.
+    mov word ptr [si], bx
     mov ax, StockID
     sub ax, 120
     mov StockID, ax
@@ -610,7 +610,6 @@ ConfirmExit:
     ShowMsg CRLF
     jmp ConfirmExit
 
-
     ExitConfirmed:
         call ClearScreen
         ShowMsg THANK_YOU_MSG
@@ -695,8 +694,6 @@ IntegerConversion:
     jne DoneLoopingTwo ; if not, repeat the loop
     pop bx ; restore BX from the stack
     ret
-
-
 
 PrintString:
   push ax
