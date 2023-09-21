@@ -212,7 +212,7 @@ Tablets:
         je displayTablets       ; Jump to 'displayItem' if ID is 1 (Tab S9)
 
         cmp ax, 10            ; Compare the ID with 10
-        ja DoneLoopingTablets               ; Jump to 'done' if ID is greater than 10
+        ja DoneLoopingTablets ; Jump to 'done' if ID is greater than 10
 
         jmp skipTablets    
 
@@ -235,7 +235,7 @@ Tablets:
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
-        mov ax, [si + 120]    ; Load the inventory stock into ax
+        ; mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
         
         call GenerateTab        
@@ -396,7 +396,7 @@ ViewItem:
         call IntegerConversion  ; Call a subroutine to print the inventory ID
         call GenerateTab        ; Call a subroutine to print a tab character
 
-        mov dx, offset INVENTORY + 20  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs
+        mov dx, offset INVENTORY + 20  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs | dx is also used to store the memory address of strings
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
         
@@ -406,8 +406,7 @@ ViewItem:
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
-
-        mov ax, [si + 120]    ; Load the inventory stock into ax
+        ; mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
         
         call GenerateTab        
@@ -441,54 +440,52 @@ SellItem:
         je main_loop
 
     cmp al, '0'
-    jb InvalidInputForSell ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
+    jb InvalidInputForSell
     cmp al, '9'
     ja InvalidInputForSell
-    jmp ProcessSell
+
+    sub al, 30h ; The ASCII values corresponding to the characters '0' through '9' are '30H' through '39H'. To obtain the numerical values 0 through 9, you simply subtract '30H' from their respective ASCII values.
+    add al, al ; Multiply the value by 2 to convert it to an index, but why?
+    sub ax, 136 ; Subtract 136 from the value to convert it to an index
+    mov StockID, ax
+
+    ShowMsg SELL_QUANTITY_MSG
+    mov ah, 01
+    int 21h
+    sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
+    sub ax, 256
+    mov cx, ax
+
+    lea si, INVENTORY
+    add si, StockID
+    mov bx, [si] ; load stock into bx
+    sub bx, cx
+    cmp bx, 0
+    js SellError ; If the quantity entered is greater than the quantity in stock, the code jumps to the SellError label | js is a conditional jump instruction that jumps if the sign flag is set (SF = 1)
+
+    mov word ptr [si], bx ; what is word? - word is a directive that tells the assembler to reserve 2 bytes of memory for each value in the list.
+    mov ax, StockID
+    sub ax, 120
+    mov StockID, ax
+    lea si, SOLDITEM
+    add si, StockID
+    mov ax, [si]
+    add cx, ax 
+    mov word ptr [si], cx
+
+    call ClearScreen
+    ShowMsg CRLF
+    ShowMsg SELL_SUCCESS
+    ShowMsg CRLF
+    call ViewItem
+    call ReturnToMenu ; calls the ReturnToMenu macro
+    jmp main_loop
 
     InvalidInputForSell:
         ShowMsg CRLF
         ShowMsg INVALID_INPUT
         ShowMsg CRLF
         jmp SellMenu
-
-    ProcessSell:
-        sub al, 30h ; convert to integer
-        add al, al
-        sub ax, 136
-        mov StockID, ax
-
-        ShowMsg SELL_QUANTITY_MSG
-        mov ah, 01
-        int 21h
-        sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
-        sub ax, 256
-        mov cx, ax
-
-        lea si, INVENTORY
-        add si, StockID
-        mov bx, [si] ; load stock into bx
-        sub bx, cx
-        cmp bx, 0
-        js SellError ; If the quantity entered is greater than the quantity in stock, the code jumps to the SellError label.
-        
-        mov word ptr [si], bx
-        mov ax, StockID
-        sub ax, 120 
-        mov StockID, ax
-        lea si, SOLDITEM 
-        add si, StockID
-        mov ax, [si]
-        add cx, ax 
-        mov word ptr [si], cx
-    
-        call ClearScreen
-        ShowMsg CRLF
-        ShowMsg SELL_SUCCESS
-        ShowMsg CRLF
-        call ViewItem
-        call ReturnToMenu ; calls the ReturnToMenu macro
-        jmp main_loop
 
     SellError:
         ShowMsg CRLF
@@ -514,7 +511,31 @@ RestockItem:
     jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
     cmp al, '9'
     ja InvalidInputForRestock
-    jmp ProcessRestock
+
+    sub al, 30h ; convert to integer
+    add al, al
+    sub ax, 136
+    mov StockID, ax
+
+    ShowMsg RESTOCK_QUANTITY_MSG
+    mov ah, 01
+    int 21h
+    sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
+    sub ax, 256
+    mov cx, ax
+
+    lea si, INVENTORY
+    add si, StockID
+    add cx, [si]
+    mov word ptr [si], cx 
+
+    call ClearScreen
+    ShowMsg CRLF
+    ShowMsg RESTOCK_SUCCESS
+    ShowMsg CRLF
+    call ViewItem
+    call ReturnToMenu ; calls the ReturnToMenu macro
+    jmp main_loop
 
     InvalidInputForRestock:
         ShowMsg CRLF
@@ -522,37 +543,11 @@ RestockItem:
         ShowMsg CRLF
         jmp SellMenu
 
-    ProcessRestock:
-        sub al, 30h ; convert to integer
-        add al, al
-        sub ax, 136
-        mov StockID, ax
-
-        ShowMsg RESTOCK_QUANTITY_MSG
-        mov ah, 01
-        int 21h
-        sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
-        sub ax, 256
-        mov cx, ax
-
-        lea si, INVENTORY
-        add si, StockID
-        add cx, [si]
-        mov word ptr [si], cx 
-
-        call ClearScreen
-        ShowMsg CRLF
-        ShowMsg RESTOCK_SUCCESS
-        ShowMsg CRLF
-        call ViewItem
-        call ReturnToMenu ; calls the ReturnToMenu macro
-        jmp main_loop
-
 GenerateReport:
     mov bp, 0
     lea si, INVENTORY
     mov bx, offset SOLDITEM 
-    mov di, offset ITEMPRICE 
+    mov di, offset ITEMPRICE ; di is used to store the memory address of strings
 
     LoopForReport:
         mov ax, [si]
@@ -656,18 +651,20 @@ PrintRedBlink:
   push bx
   push cx
   mov bx, dx ; set BX to the offset of the string
-  mov cx, 1; set the length to 10 characters
-  xor bh, bh
+  mov cx, 4  ; set the length to 4 characters
+  xor bh, bh ; to ensure that the high byte of bx is clear before performing the loop operation
+
   LoopForBlink:
     mov dl, [bx] ; loads a character from memory at the address pointed to by bx into the dl register
-    mov ah, 09h
-    mov al, dl ; The character loaded from memory is placed in the al register, preparing it for display.
-    mov bl, 04h ; set background color to red
-    or bl, 80h ; This OR operation sets the high bit (bit 7) of bl, which likely causes the background color to blink
+    mov ah, 09h ; write character and attribute at cursor position
+    mov al, dl ; The character loaded from memory is placed in the al register, preparing it for display. | the int 10h service requires the character to be displayed to be in the al register
+    mov bl, 04h ; bl is used to set the background color to red
+    or bl, 80h ; 80h = 10000000 | sets the high bit of the bl register to 1, potentially indicating a blinking attribute
     int 10h ; display the character in al with the specified background color (black with blink)
     inc bx ; increment offset to next character
-    xor bh, 80h
-    loop LoopForBlink ; repeat until 10 characters are printed
+    xor bh, 80h ; This clears the high bit (bit 7) of the bh register, a common practice to ensure that the high byte is properly set
+    loop LoopForBlink ; repeat until all characters are printed
+
   DoneLoopingOne:
     pop cx ; restore registers
     pop bx
@@ -699,11 +696,7 @@ IntegerConversion:
     pop bx ; restore BX from the stack
     ret
 
-GenerateTab:
-  mov dl, 09 ; dl is often used for storing the ASCII value of a tab character | ASCII value of tab character is 09
-  mov ah, 02
-  int 21h
-  ret
+
 
 PrintString:
   push ax
@@ -727,6 +720,12 @@ PrintString:
 GenerateNewLine:
   mov dl, 0ah ; ASCII value for new line
   mov ah, 02 ; write character
+  int 21h
+  ret
+
+GenerateTab:
+  mov dl, 09 ; dl is often used for storing the ASCII value of a tab character | ASCII value of tab character is 09
+  mov ah, 02
   int 21h
   ret
 
