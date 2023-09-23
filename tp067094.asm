@@ -112,9 +112,11 @@ TOTAL_PROFIT_MSG db '-----------------------------------------------------------
                  
 ; Constants
 CATEGORY_OPTION_MSG  db 13, 'Select a category: $'
+SELL_WARNING_MSG     db 13, 10,'Sell one item at a time, up to 9 units.', 13, 10, '$'
 SELL_OPTION_MSG      db 13, 10, 'Insert Item ID to sell (e to exit to main menu): $'
 SELL_QUANTITY_MSG    db 13, 10, 'How many do you want to sell?: $'
 SELL_SUCCESS         db 13, 10, 'Item has successfully been sold!', 13, 10, '$'
+RESTOCK_WARNING_MSG  db 13, 10,'Restock one item at a time, up to 9 units.', 13, 10, '$'
 RESTOCK_QUANTITY_MSG db 13, 10, 'How many do you want to restock?: $'
 RESTOCK_OPTION_MSG   db 13, 10, 'Insert Item ID to restock (e to exit to main menu): $'
 RESTOCK_SUCCESS      db 13, 10, 'Item has successfully been restocked!', 13, 10, '$'
@@ -161,7 +163,7 @@ CategoryMenu:
     ShowMsg CATEGORIES_HEADER
     ShowMsg CATEGORY_OPTION_MSG
 
-    mov ah,01h
+    mov ah, 01h
     int 21h
 
     cmp al,'1'
@@ -427,6 +429,7 @@ ViewItem:
         ret
 
 SellItem:
+    ShowMsg SELL_WARNING_MSG
     ShowMsg SELL_OPTION_MSG
 
     mov ah, 01
@@ -450,6 +453,7 @@ SellItem:
     mov StockID, ax
 
     ShowMsg SELL_QUANTITY_MSG
+    
     mov ah, 01
     int 21h
     sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
@@ -495,6 +499,7 @@ SellItem:
         call SellMenu
 
 RestockItem:
+    ShowMsg RESTOCK_WARNING_MSG
     ShowMsg RESTOCK_OPTION_MSG
 
     mov ah, 01
