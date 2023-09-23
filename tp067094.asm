@@ -18,23 +18,11 @@ MENU_MESSAGE db 13, 10
              db '--------------------------------MAIN MENU--------------------------------', 13, 10
              db '|                         1. Explore Our Stock                          |', 13, 10
              db '|                         2. Sort by Categories                         |', 13, 10
-             db '|                         3. Buy Products                               |', 13, 10
+             db '|                         3. Sell Products                              |', 13, 10
              db '|                         4. Replenish Supplies                         |', 13, 10
              db '|                         5. Generate Daily Report                      |', 13, 10
              db '|                         6. Make a Graceful Exit                       |', 13, 10
              db '-------------------------------------------------------------------------', 13, 10, '$' ; $ means end of the string
-
-THANK_YOU_MSG db 13, 10
-             db '-----------------------<BranStock Management System>---------------------', 13, 10
-             db '| __________                        _________ __                 __     |', 13, 10
-             db '| \______   \____________    ____  /   _____//  |_  ____   ____ |  | __ |', 13, 10
-             db '|  |    |  _/\_  __ \__  \  /    \ \_____  \\   __\/  _ \_/ ___\|  |/ / |', 13, 10
-             db '|  |    |   \ |  | \// __ \|   |  \/_____|  \|  | (  <_> )  \___|    <  |', 13, 10
-             db '|  |______  / |__|  (____  /___|  /_______  /|__|  \____/ \___  >__|_ \ |', 13, 10
-             db '|         \/             \/     \/        \/                  \/     \/ |', 13, 10
-             db '-------------------------------------------------------------------------', 13, 10
-             db '|           Thank you for using BrandonStock Management System!         |', 13, 10
-             db '-------------------------------------------------------------------------', 13, 10, '$'
 
 INVENTORY_HEADER db 13, 10
                  db '-----------------------<BranStock Management System>---------------------', 13, 10
@@ -109,7 +97,19 @@ REPORT_HEADER db 13, 10
 TOTAL_PROFIT_MSG db '-------------------------------------------------------------------------', 13, 10
                  db '|       Congratulations! You havae raked in a substantial profit!       |', 13, 10
                  db '-------------------------------------------------------------------------', 13, 10, '$'
-                 
+            
+THANK_YOU_MSG db 13, 10
+             db '-----------------------<BranStock Management System>---------------------', 13, 10
+             db '| __________                        _________ __                 __     |', 13, 10
+             db '| \______   \____________    ____  /   _____//  |_  ____   ____ |  | __ |', 13, 10
+             db '|  |    |  _/\_  __ \__  \  /    \ \_____  \\   __\/  _ \_/ ___\|  |/ / |', 13, 10
+             db '|  |    |   \ |  | \// __ \|   |  \/_____|  \|  | (  <_> )  \___|    <  |', 13, 10
+             db '|  |______  / |__|  (____  /___|  /_______  /|__|  \____/ \___  >__|_ \ |', 13, 10
+             db '|         \/             \/     \/        \/                  \/     \/ |', 13, 10
+             db '-------------------------------------------------------------------------', 13, 10
+             db '|           Thank you for using BrandonStock Management System!         |', 13, 10
+             db '-------------------------------------------------------------------------', 13, 10, '$'      
+
 ; Constants
 CATEGORY_OPTION_MSG  db 13, 'Select a category: $'
 SELL_WARNING_MSG     db 13, 10,'Sell one item at a time, up to 9 units.', 13, 10, '$'
@@ -124,7 +124,7 @@ USER_INPUT_MSG       db 13, 10, 'Pick Your Choice: $'
 ENTER_RETURN_MSG     db 13, 10, 'Hit Enter to bounce back to the menu!$', 13,10
 EXIT_MSG             db 13, 10,'Are you sure you want to exit (y/N): $', 13, 10
 INVALID_INPUT        db 'Oops! Invalid input. Please try again.', '$'
-SELL_LIMIT_EXCEEDED  db 'Sorry, you cannt sell more than what is in stock!', '$' 
+SELL_LIMIT_EXCEEDED  db 'Sorry, you cannt sell more than what is in stock, or the input provided is invalid!', '$' 
 MAX_STOCK_REACHED    db 'Oh no! This item is already at its maximum stock (9)!', '$' 
 CRLF                 db 13, 10, '$'  ; 13 - \r (carriage return), 10 - \n (line feed)
 LINECLOSE            db '-------------------------------------------------------------------------', 13, 10, '$' ; Closing Line
@@ -489,6 +489,7 @@ SellItem:
         ShowMsg CRLF
         ShowMsg INVALID_INPUT
         ShowMsg CRLF
+        call ReturnToMenu
         jmp SellMenu
 
     SellError:
@@ -525,6 +526,10 @@ RestockItem:
     ShowMsg RESTOCK_QUANTITY_MSG
     mov ah, 01
     int 21h
+    cmp al, '0'
+    jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
+    cmp al, '9'
+    ja InvalidInputForRestock
     sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
     sub ax, 256
     mov cx, ax
@@ -546,6 +551,7 @@ RestockItem:
         ShowMsg CRLF
         ShowMsg INVALID_INPUT
         ShowMsg CRLF
+        call ReturnToMenu
         jmp SellMenu
 
 GenerateReport:
