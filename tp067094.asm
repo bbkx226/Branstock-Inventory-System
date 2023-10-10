@@ -7,6 +7,7 @@
 .data ; data segment - marks the beginning of the data section for declaring program data
 
 ; Headers and Default Mesasges
+
 MENU_MESSAGE db 13, 10
              db '-----------------------<BranStock Management System>---------------------', 13, 10
              db '| __________                        _________ __                 __     |', 13, 10
@@ -23,6 +24,17 @@ MENU_MESSAGE db 13, 10
              db '|                         5. Generate Daily Report                      |', 13, 10
              db '|                         6. Make a Graceful Exit                       |', 13, 10
              db '-------------------------------------------------------------------------', 13, 10, '$' ; $ means end of the string
+
+LOGIN_HEADER db 13, 10
+                 db '-----------------------<BranStock Management System>---------------------', 13, 10
+                 db '                      .__                .__                            |', 13, 10
+                 db '                      |  |   ____   ____ |__| ____                      |', 13, 10
+                 db '                      |  |  /  _ \ / ___\|  |/    \                     |', 13, 10
+                 db '                      |  |_(  <_> ) /_/  >  |   |  \                    |', 13, 10
+                 db '                      |____/\____/\___  /|__|___|  /                    |', 13, 10
+                 db '                                 /_____/         \/                     |', 13, 10
+                 db '------------------------------INVENTORY----------------------------------', 13, 10
+                 db '*** Warning! You only have 3 attempts to sign in. ***','$'
 
 INVENTORY_HEADER db 13, 10
                  db '-----------------------<BranStock Management System>---------------------', 13, 10
@@ -47,7 +59,8 @@ CATEGORIES_HEADER db 13, 10
                   db '|                         1. Tablets                                    |', 13, 10
                   db '|                         2. Mobile Phones                              |', 13, 10
                   db '|                         3. Computers                                  |', 13, 10
-                  db '|                         4. Exit to Main Menu                          |', 13, 10
+                  db '|                         4. Low In Stocks                              |', 13, 10
+                  db '|                         5. Exit to Main Menu                          |', 13, 10
                   db '-------------------------------------------------------------------------', 13, 10, '$'
 
 TABLET_HEADER db 13, 10
@@ -128,13 +141,27 @@ SELL_LIMIT_EXCEEDED  db 'Sorry, you cannt sell more than what is in stock, or th
 MAX_STOCK_REACHED    db 'Oh no! This item is already at its maximum stock (9)!', '$' 
 CRLF                 db 13, 10, '$'  ; 13 - \r (carriage return), 10 - \n (line feed)
 LINECLOSE            db '-------------------------------------------------------------------------', 13, 10, '$' ; Closing Line
+USERNAME_PROMPT      db 13, 10, 'Enter username (4 characters): $'
+PASSWORD_PROMPT      db 13, 10, 'Enter password (4 characters): $'
+INVALID_LOGIN        db 13, 10, 'Invalid username or password. Please try again.$'
+FORCE_EXIT           db 13, 10, 'You have exceeded the maximum number of attempts. Exiting program...$'
+LOGIN_SUCCESS_MSG    db 13, 10, 'Login successful!$'
+USERNAME	         db "bbkx"
+PASSWORD             db "1234"
+MAX_ATTEMPTS         equ 3
+USERNAME_LENGTH      equ 4
+PASSWORD_LENGTH      equ 4
+INPUT_USERNAME	     db USERNAME_LENGTH DUP (?) ; DUP is a directive that tells the assembler to duplicate the value in the brackets a specified number of times.
+INPUT_PASSWORD	     db PASSWORD_LENGTH DUP (0)
+ATTEMPT              db 0
+
 
 ; Inventory
 ; What is dw? - dw is a directive that tells the assembler to reserve 2 bytes of memory for each value in the list.
 ; What is db? - db is a directive that tells the assembler to reserve 1 byte of memory for each value in the list.
 INVENTORY dw 0,1,2,3,4,5,6,7,8,9
           db 'iPad Pro  ', 'Tab S9    ', 'ROG Strix ', 'Macbook   ', 'Tuf Gaming', 'iPhone 13 ', 'Z Flip 5  ', 'Z Fold 5  ', 'Reno R9   ', 'Galaxy S10'
-          dw 10, 9, 6, 20, 13, 5, 2, 6, 3, 12, 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, 439, '$'
+          dw 10, 9, 4, 20, 13, 5, 2, 6, 3, 12, 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, 439, '$'
 StockID   dw ?
 SOLDITEM  dw 3,7,6,2,3,13,1,3,10,20,'$' ; Random values for generating report
 ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, 439, '$'
@@ -143,9 +170,90 @@ ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, 439, '$'
 ; Macro is a sequence of instructions that is assigned a name and can be used multiple times in a program.
 ShowMsg MACRO Msg ; Msg - Parameter
     lea  dx, Msg ; load effective address of the Msg parameter into the dx register | dx is often used for storing the memory address of strings
-    mov  ah, 9 ; display a string of characters on the screen
+    mov  ah, 09h ; display a string of characters on the screen
     int  21h ; int 21h is a software interrupt that invokes the DOS operating system to perform a specific task
 ENDM ; marks the end of the macro definition  
+
+Login proc
+
+    call CleanTerminal
+
+    ShowMsg LOGIN_HEADER
+    ShowMsg USERNAME_PROMPT
+
+    ; Input the username using a loop, with at most MAX_ATTEMPTS invalid attempts
+    mov cx, 4
+    mov si, 0
+
+    LoopForInsertingName:
+        mov ah, 01h
+        int 21h
+        mov INPUT_USERNAME[si], al
+        inc si
+        loop LoopForInsertingName
+
+        ShowMsg PASSWORD_PROMPT
+
+        ; Input the password using a loop, with at most MAX_ATTEMPTS invalid attempts
+        mov cx, 4
+        mov si, 0
+
+    LoopForInsertingPassword:
+        mov ah, 07h
+        int 21h
+        mov INPUT_PASSWORD[si], al
+        inc si
+        loop LoopForInsertingPassword
+
+        ; Validate the login credentials
+        mov si, 0 ; username index
+        mov di, 0 ; password index
+
+    CheckName:
+        cmp si, USERNAME_LENGTH
+        je CheckPassword
+        mov al, USERNAME[si]
+        cmp al, INPUT_USERNAME[si]
+        je CheckNextName
+        jne Error
+
+    CheckNextName:
+        inc si
+        jmp CheckName
+
+    CheckPassword:
+        cmp di, PASSWORD_LENGTH
+        je LoginSuccess
+        mov al, PASSWORD[di]
+        cmp al, INPUT_PASSWORD[di]
+        je CheckNextPassword
+        jne Error
+
+    CheckNextPassword:
+        inc di
+        jmp CheckPassword
+
+    Error:
+        ShowMsg INVALID_LOGIN
+        ; Increment the number of attempts and check if it exceeds the maximum
+        inc ATTEMPT
+        cmp ATTEMPT, MAX_ATTEMPTS
+        je LoginFailure
+
+        ; Jump back to the login procedure to try again
+        jmp Login
+
+    LoginSuccess:
+        ; Output a success message and jump to the main menu
+        ShowMsg LOGIN_SUCCESS_MSG
+        jmp main_loop
+
+    LoginFailure:
+        ; Output a failure message and exit the program
+        ShowMsg FORCE_EXIT
+        jmp ExitProgram
+
+Login endp
 
 DisplayMenu:
     ShowMsg MENU_MESSAGE
@@ -153,19 +261,19 @@ DisplayMenu:
     ret
 
 InventoryMenu:
-    call ClearScreen
+    call CleanTerminal
     call ViewItem
     call ReturnToMenu
     jmp main_loop
 
 CategoryMenu:
-    call ClearScreen
+    call CleanTerminal
     ShowMsg CATEGORIES_HEADER
     ShowMsg CATEGORY_OPTION_MSG
 
     mov ah, 01h
     int 21h
-
+    
     cmp al,'1'
     je Tablets
     cmp al,'2'
@@ -173,6 +281,8 @@ CategoryMenu:
     cmp al,'3'
     je Computers
     cmp al,'4'
+    je LowInStock
+    cmp al,'5'
     je main_loop
 
     ShowMsg CRLF
@@ -191,14 +301,14 @@ RestockMenu:
     call RestockItem
 
 DailyReportMenu:
-    call ClearScreen
+    call CleanTerminal
     ShowMsg REPORT_HEADER
     call GenerateReport
     call ReturnToMenu
     jmp main_loop
     
 Tablets:
-    call ClearScreen
+    call CleanTerminal
     ShowMsg TABLET_HEADER
 
     mov bp, 0                ; Initialize the base pointer (bp) to 0
@@ -231,18 +341,14 @@ Tablets:
         add dx, bp ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
 
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab    
+        call GenerateTripleTab        
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
         ; mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
         
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+        call GenerateTripleTab      
 
         mov ax, [si + 140]    ; Load some other data associated with the inventory item
         call IntegerConversion
@@ -257,7 +363,7 @@ Tablets:
         ret
 
 Phones:
-    call ClearScreen
+    call CleanTerminal
     ShowMsg PHONE_HEADER
     mov bp, 0                ; Initialize the base pointer (bp) to 0
     lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
@@ -302,17 +408,14 @@ Phones:
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
 
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+        call GenerateTripleTab        
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
         mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+
+        call GenerateTripleTab          
 
         mov ax, [si + 140]    ; Load some other data associated with the inventory item
         call IntegerConversion
@@ -327,7 +430,7 @@ Phones:
         ret
 
 Computers:
-    call ClearScreen
+    call CleanTerminal
     ShowMsg COMPUTER_HEADER
     mov bp, 0                ; Initialize the base pointer (bp) to 0
     lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
@@ -360,17 +463,14 @@ Computers:
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
 
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+        call GenerateTripleTab        
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
         mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+        
+        call GenerateTripleTab        
 
         mov ax, [si + 140]    ; Load some other data associated with the inventory item
         call IntegerConversion
@@ -379,6 +479,58 @@ Computers:
         jmp skipComputers 
 
     DoneLoopingComputers:
+        ShowMsg LINECLOSE
+        call ReturnToMenu
+        jmp CategoryMenu
+        ret
+LowInStock:
+    call CleanTerminal
+    ShowMsg INVENTORY_HEADER  ; Display the inventory header message
+
+    xor bp, bp               ; Initialize the base pointer (bp) to 0 | Equals to mov bp, 0
+    lea si, INVENTORY        ; Load the address of the INVENTORY data structure into si
+
+    LoopLowInStockStart:
+        mov ax, [si]          ; The square brackets are used to dereference the pointer, which means that the value at the memory address pointed to by the pointer is loaded into the ax register.
+        cmp ax, 10            ; Compare the ID with 10
+        ja doneLoopLowStock   
+        
+        mov ax, [si + 120]
+        mov bx, ax ; Copies the value in the ax register (assuming it contains a 16-bit integer) into the bx register
+        cmp bx, 5 ; Compares the value in the bx register with the value 5
+        jle PrintLowInStock
+        add bp, 10 ; Add 10 to the base pointer to move to the next inventory name
+        add si, 2 ; Increment SI by 2 to point to the next word in the inventory array
+        jmp LoopLowInStockStart
+ 
+        PrintLowInStock:
+            mov ax, [si]
+            call IntegerConversion  ; Call a subroutine to print the inventory ID
+            call GenerateTab        ; Call a subroutine to print a tab character
+
+            mov dx, offset INVENTORY + 20  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs | dx is also used to store the memory address of strings
+            add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
+            call PrintString
+            
+            call GenerateTripleTab
+
+            mov ax, [si + 120]    ; Load the inventory price into ax
+            call ValidateQty
+            ; mov ax, [si + 120]    ; Load the inventory stock into ax
+            call IntegerConversion
+            
+            call GenerateTripleTab        
+
+            mov ax, [si + 140] ; Load some other data associated with the inventory item
+            call IntegerConversion        
+
+            call GenerateNewLine
+
+            add bp, 10 ; Add 10 to the base pointer to move to the next inventory name
+            add si, 2 ; Increment SI by 2 to point to the next word in the inventory array
+            jmp LoopLowInStockStart
+
+    doneLoopLowStock:
         ShowMsg LINECLOSE
         call ReturnToMenu
         jmp CategoryMenu
@@ -402,18 +554,14 @@ ViewItem:
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
         
-        call GenerateTab        
-        call GenerateTab
-        call GenerateTab
+        call GenerateTripleTab
 
         mov ax, [si + 120]    ; Load the inventory price into ax
         call ValidateQty
         ; mov ax, [si + 120]    ; Load the inventory stock into ax
         call IntegerConversion
         
-        call GenerateTab        
-        call GenerateTab        
-        call GenerateTab        
+        call GenerateTripleTab        
 
         mov ax, [si + 140] ; Load some other data associated with the inventory item
         call IntegerConversion        
@@ -477,7 +625,7 @@ SellItem:
     add cx, ax 
     mov word ptr [si], cx
 
-    call ClearScreen
+    call CleanTerminal
     ShowMsg CRLF
     ShowMsg SELL_SUCCESS
     ShowMsg CRLF
@@ -539,7 +687,7 @@ RestockItem:
     add cx, [si]
     mov word ptr [si], cx 
 
-    call ClearScreen
+    call CleanTerminal
     ShowMsg CRLF
     ShowMsg RESTOCK_SUCCESS
     ShowMsg CRLF
@@ -622,7 +770,7 @@ ConfirmExit:
     jmp ConfirmExit
 
     ExitConfirmed:
-        call ClearScreen
+        call CleanTerminal
         ShowMsg THANK_YOU_MSG
         jmp ExitProgram
 
@@ -634,7 +782,7 @@ ReturnToMenu:
     jne ReturnToMenu ; If the user did not press the Enter key, the code jumps to the ReturnToMenu label.
     ret ; returns to the calling function
 
-ClearScreen: ; Function to clear the screen
+CleanTerminal: ; Function to clear the screen
     mov ah, 06h ; scroll the screen up
     mov al, 0 ; clear the entire screen
     mov bh, 07h ; di    splay attribute (white on black)
@@ -646,14 +794,14 @@ ClearScreen: ; Function to clear the screen
 ExitProgram:
     mov ah,4Ch ; terminates the program
     int 21h
-    
+ 
 ValidateQty:
   ; check if the word is less than or equal to 5
   mov bx, ax ; Copies the value in the ax register (assuming it contains a 16-bit integer) into the bx register
   cmp bx, 5 ; Compares the value in the bx register with the value 5
   jle PrintRedBlink ; jle - jump if less than or equal to
   ret
-
+ 
 PrintRedBlink:
   ; Print a string of characters
   ; Input: CX = length of string, DX = offset of string
@@ -737,14 +885,30 @@ GenerateTab:
   int 21h
   ret
 
+GenerateTripleTab:
+  mov dl, 09
+  mov ah, 02
+  int 21h
+
+  mov dl, 09
+  mov ah, 02
+  int 21h
+
+  mov dl, 09
+  mov ah, 02
+  int 21h
+  ret
+
 ; Main Function
 ; MAIN PROC is a function that is called when the program is executed.
 main proc
     mov ax, @Data ; ax is the only register that can be used to load the segment register | @Data represents the starting address of the data segment
     mov ds, ax ; ds register ensures that data accesses within the program use the correct segment
 
+    call Login
+
     main_loop:
-        call ClearScreen
+        call CleanTerminal
         call DisplayMenu
         mov ah, 01h ; read a single character from the keyboard | why ah? It's reserved for passing the function code to the interrupt service
         int 21h
