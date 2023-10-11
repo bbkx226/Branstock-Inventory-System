@@ -162,9 +162,10 @@ ATTEMPT              db 0
 INVENTORY dw 0,1,2,3,4,5,6,7,8
           db 'iPad Pro  ', 'Tab S9    ', 'ROG Strix ', 'Macbook   ', 'Tuf Gaming', 'iPhone 13 ', 'Z Flip 5  ', 'Z Fold 5  ', 'Reno R9   '
           dw 10, 9, 4, 20, 13, 5, 2, 6, 3, 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, '$'
+SOLDITEM  dw 3,7,6,2,3,13,1,3,10
+ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300
 StockID   dw ?
-SOLDITEM  dw 3,7,6,2,3,13,1,3,10,'$' ; Random values for generating report
-ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300, '$'
+
 
 .code ; the start of the code section in an assembly program
 ; Macro is a sequence of instructions that is assigned a name and can be used multiple times in a program.
@@ -253,7 +254,7 @@ Login proc
         jmp ExitProgram
 
 Login endp
-  
+
 DisplayMenu:
     ShowMsg MENU_MESSAGE
     ShowMsg USER_INPUT_MSG
@@ -698,17 +699,17 @@ RestockItem:
         jmp SellMenu
 
 GenerateReport:
-    mov bp, 0
+    xor bp, bp
     lea si, INVENTORY
     mov bx, offset SOLDITEM 
     mov di, offset ITEMPRICE ; di is used to store the memory address of strings
 
     LoopForReport:
         mov ax, [si]
-        cmp ax, 8
+        cmp ax, 9
         ja DoneLoopingReport 
-        call IntegerConversion
 
+        call IntegerConversion
         call GenerateTab
 
         mov dx, offset INVENTORY + 18
@@ -737,10 +738,10 @@ GenerateReport:
         call IntegerConversion
 
         ShowMsg CRLF
-        add bp, 10
         add si, 2 ; increment SI to point to the next word
         add bx, 2 
         add di, 2
+        add bp, 10
         jmp LoopForReport ; repeat the loop for the next element
     
     DoneLoopingReport:
@@ -826,8 +827,10 @@ PrintRedBlink:
     ret
 
 ValidateProfit:
+    push bx
     mov bx, ax
-    cmp bx, 35000
+    cmp bx, 20000
+    pop bx
     ja PrintGreenBlink
     ret
 
@@ -859,48 +862,48 @@ PrintGreenBlink:
     ret
 
 IntegerConversion:
-  ; converts a 16-bit integer value in the ax register to its corresponding ASCII string representation and then prints that string
-  push bx ; why push? - to save the value of the bx register onto the stack, to ensure that the bx register is not overwritten by the subroutine
-  mov bx, 10 ; set BX to 10 (divisor), converting the integer to a decimal representation
-  xor cx, cx ; why clear cx? - to ensure that the counter is clear before performing the division operation
+    ; converts a 16-bit integer value in the ax register to its corresponding ASCII string representation and then prints that string
+    push bx ; why push? - to save the value of the bx register onto the stack, to ensure that the bx register is not overwritten by the subroutine
+    mov bx, 10 ; set BX to 10 (divisor), converting the integer to a decimal representation
+    xor cx, cx ; why clear cx? - to ensure that the counter is clear before performing the division operation
 
-  LoopForConversion:
-    xor dx, dx ; clear the high byte of DX, to ensure that dx is clear before performing the division operation
-    div bx ; divide AX by BX
-    add dl, '0' ; convert the remainder to ASCII
-    push dx ; save the digit on the stack
-    inc cx ; increment the counter
-    cmp ax, 0 ; check if AX is zero
-    jne LoopForConversion ; if not, repeat the loop
+    LoopForConversion:
+        xor dx, dx ; clear the high byte of DX, to ensure that dx is clear before performing the division operation
+        div bx ; divide AX by BX
+        add dl, '0' ; convert the remainder to ASCII
+        push dx ; save the digit on the stack
+        inc cx ; increment the counter
+        cmp ax, 0 ; check if AX is zero
+        jne LoopForConversion ; if not, repeat the loop
 
-  DoneLoopingInteger:
-    pop dx ; get the next digit from the stack
-    mov ah, 02 ; write character
-    int 21h ; print the digit
-    dec cx ; decrement the counter
-    cmp cx, 0 ; check if all digits have been printed
-    jne DoneLoopingInteger ; if not, repeat the loop
-    pop bx ; restore BX from the stack
-    ret
+    DoneLoopingInteger:
+        pop dx ; get the next digit from the stack
+        mov ah, 02 ; write character
+        int 21h ; print the digit
+        dec cx ; decrement the counter
+        cmp cx, 0 ; check if all digits have been printed
+        jne DoneLoopingInteger ; if not, repeat the loop
+        pop bx ; restore BX from the stack
+        ret
 
 PrintString:
-  push ax
-  push bx
-  push cx
-  mov bx, dx ; set BX to the offset of the string
-  mov cx, 10 ; set the length to 10 characters
- 
-  LoopForPrinting:
-    mov dl, [bx] ; load character from memory
-    int 21h ; output the character
-    inc bx ; increment offset to next character
-    loop LoopForPrinting ; repeat until 10 characters are printed
-  
-  DoneLoopingString:
-    pop cx ; restore registers
-    pop bx
-    pop ax
-    ret
+    push ax
+    push bx
+    push cx
+    mov bx, dx ; set BX to the offset of the string
+    mov cx, 10 ; set the length to 10 characters
+    
+    LoopForPrinting:
+        mov dl, [bx] ; load character from memory
+        int 21h ; output the character
+        inc bx ; increment offset to next character
+        loop LoopForPrinting ; repeat until 10 characters are printed
+    
+    DoneLoopingString:
+        pop cx ; restore registers
+        pop bx
+        pop ax
+        ret
 
 GenerateNewLine:
     mov dl, 0ah ; ASCII value for new line
