@@ -7,7 +7,6 @@
 .data ; data segment - marks the beginning of the data section for declaring program data
 
 ; Headers and Default Mesasges
-
 MENU_MESSAGE db 13, 10
              db '-----------------------<BranStock Management System>---------------------', 13, 10
              db '| __________                        _________ __                 __     |', 13, 10
@@ -125,11 +124,11 @@ THANK_YOU_MSG db 13, 10
 
 ; Constants
 CATEGORY_OPTION_MSG  db 13, 'Select a category: $'
-SELL_WARNING_MSG     db 13, 10,'Sell one item at a time, up to 9 units.', 13, 10, '$'
+SELL_WARNING_MSG     db 13, 10,'Sell one item at a time, up to 99 units.', 13, 10, '$'
 SELL_OPTION_MSG      db 13, 10, 'Insert Item ID to sell (e to exit to main menu): $'
 SELL_QUANTITY_MSG    db 13, 10, 'How many do you want to sell?: $'
 SELL_SUCCESS         db 13, 10, 'Item has successfully been sold!', 13, 10, '$'
-RESTOCK_WARNING_MSG  db 13, 10,'Restock one item at a time, up to 9 units.', 13, 10, '$'
+RESTOCK_WARNING_MSG  db 13, 10,'Restock one item at a time, up to 99 units.', 13, 10, '$'
 RESTOCK_QUANTITY_MSG db 13, 10, 'How many do you want to restock?: $'
 RESTOCK_OPTION_MSG   db 13, 10, 'Insert Item ID to restock (e to exit to main menu): $'
 RESTOCK_SUCCESS      db 13, 10, 'Item has successfully been restocked!', 13, 10, '$'
@@ -151,10 +150,9 @@ PASSWORD             db "1234"
 MAX_ATTEMPTS         equ 3
 USERNAME_LENGTH      equ 4
 PASSWORD_LENGTH      equ 4
-INPUT_USERNAME	     db USERNAME_LENGTH DUP (?) ; DUP is a directive that tells the assembler to duplicate the value in the brackets a specified number of times.
-INPUT_PASSWORD	     db PASSWORD_LENGTH DUP (0)
+INPUT_USERNAME	     db USERNAME_LENGTH dup (?) ; DUP is a directive that tells the assembler to duplicate the value in the brackets a specified number of times.
+INPUT_PASSWORD	     db PASSWORD_LENGTH dup (0)
 ATTEMPT              db 0
-
 
 ; Inventory
 ; What is dw? - dw is a directive that tells the assembler to reserve 2 bytes of memory for each value in the list.
@@ -165,7 +163,7 @@ INVENTORY dw 0,1,2,3,4,5,6,7,8
 SOLDITEM  dw 3,7,6,2,3,13,1,3,10
 ITEMPRICE dw 5400, 6499, 5700, 11500, 6000, 3800, 5000, 7299, 1300
 StockID   dw ?
-
+Quantity db 5 dup (?)
 
 .code ; the start of the code section in an assembly program
 ; Macro is a sequence of instructions that is assigned a name and can be used multiple times in a program.
@@ -240,20 +238,44 @@ Login proc
         je LoginFailure
         ShowMsg INVALID_LOGIN
         call ReturnToMenu
-        ; Jump back to the login procedure to try again
         jmp Login
 
     LoginSuccess:
-        ; Output a success message and jump to the main menu
         ShowMsg LOGIN_SUCCESS_MSG
         jmp mainLoop
 
     LoginFailure:
-        ; Output a failure message and exit the program
         ShowMsg FORCE_EXIT
         jmp ExitProgram
 
 Login endp
+
+ConvertStringToNumber proc
+    mov  si, offset Quantity + 1
+    mov  cl, [si]
+    mov  ch, 0
+    add  si, cx
+
+    mov  bx, 0
+    mov  bp, 1
+
+    SwitchDigit:
+        mov  al, [si] 
+        sub  al, 30h
+        mov  ah, 0
+        mul  bp
+        add  bx,ax
+
+        mov  ax, bp
+        mov  bp, 10
+        mul  bp
+        mov  bp, ax
+
+        dec  si
+        loop SwitchDigit
+        mov ax, bx
+        ret 
+ConvertStringToNumber endp
 
 DisplayMenu:
     ShowMsg MENU_MESSAGE
@@ -543,20 +565,20 @@ ViewItem:
         mov ax, [si]          ; The square brackets are used to dereference the pointer, which means that the value at the memory address pointed to by the pointer is loaded into the ax register.
         cmp ax, 9            ; Compare the ID with 9
         ja DoneLoopingItem
-        
+
         call IntegerConversion  ; Call a subroutine to print the inventory ID
         call GenerateTab        ; Call a subroutine to print a tab character
 
         mov dx, offset INVENTORY + 18  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs | dx is also used to store the memory address of strings
         add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
         call PrintString
-        
+
         call GenerateTripleTab
 
         mov ax, [si + 108]    ; Load the inventory price into ax
         call ValidateQty
         call IntegerConversion
-        
+
         call GenerateTripleTab        
 
         mov ax, [si + 126] ; Load some other data associated with the inventory item
@@ -597,11 +619,14 @@ SellItem:
     mov StockID, ax
 
     ShowMsg SELL_QUANTITY_MSG
-    
-    mov ah, 01
+    mov ah, 0Ah
+    mov dx, offset Quantity
     int 21h
-    sub al, '0' ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
-    sub ax, 256
+    call ConvertStringToNumber
+    cmp ax, 0
+    jb InvalidInputForRestock
+    cmp ax, 99
+    ja InvalidInputForRestock
     mov cx, ax
 
     lea si, INVENTORY
@@ -619,7 +644,7 @@ SellItem:
     add si, StockID
     mov ax, [si]
     add cx, ax 
-    mov word ptr [si], cx
+    mov [si], cx
 
     call CleanTerminal
     call ViewItem
@@ -662,24 +687,24 @@ RestockItem:
 
     sub al, '0' ; convert to integer
     add al, al
-    sub ax, 148
+    sub ax, 148 ; (+256-108)
     mov StockID, ax
 
     ShowMsg RESTOCK_QUANTITY_MSG
-    mov ah, 01
+    mov ah, 0Ah
+    mov dx, offset Quantity
     int 21h
-    cmp al, '0'
+    call ConvertStringToNumber
+    cmp ax, 0
     jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
-    cmp al, '9'
+    cmp ax, 99
     ja InvalidInputForRestock
-    sub al, '0' ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
-    sub ax, 256
     mov cx, ax
 
     lea si, INVENTORY
     add si, StockID
     add cx, [si]
-    mov word ptr [si], cx 
+    mov [si], cx ; why mov word ptr? - The word ptr directive tells the assembler to treat the memory location as a 16-bit value, which is the size of the ax register.
 
     call CleanTerminal
     ShowMsg CRLF
