@@ -704,7 +704,7 @@ RestockItem:
     lea si, INVENTORY
     add si, StockID
     add cx, [si]
-    mov [si], cx ; why mov word ptr? - The word ptr directive tells the assembler to treat the memory location as a 16-bit value, which is the size of the ax register.
+    mov [si], cx
 
     call CleanTerminal
     ShowMsg CRLF
