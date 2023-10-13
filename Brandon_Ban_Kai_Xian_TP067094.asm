@@ -591,7 +591,7 @@ SellItem:
     cmp al, '8'
     ja InvalidInputForSell
 
-    sub al, 30h ; The ASCII values corresponding to the characters '0' through '9' are '30H' through '39H'. To obtain the numerical values 0 through 9, you simply subtract '30H' from their respective ASCII values.
+    sub al, '0' ; The ASCII values corresponding to the characters '0' through '9' are '30H' through '39H'. To obtain the numerical values 0 through 9, you simply subtract '30H' from their respective ASCII values.
     add al, al ; convert it into an offset or index that can be used to access the corresponding item in the INVENTORY array
     sub ax, 148 ; Subtract 136 from the value to convert it to an index ( 256 + CHOICE - 136)
     mov StockID, ax
@@ -600,7 +600,7 @@ SellItem:
     
     mov ah, 01
     int 21h
-    sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
+    sub al, '0' ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
     sub ax, 256
     mov cx, ax
 
@@ -622,10 +622,8 @@ SellItem:
     mov word ptr [si], cx
 
     call CleanTerminal
-    ShowMsg CRLF
-    ShowMsg SELL_SUCCESS
-    ShowMsg CRLF
     call ViewItem
+    ShowMsg SELL_SUCCESS
     call ReturnToMenu ; calls the ReturnToMenu macro
     jmp mainLoop
 
@@ -662,7 +660,7 @@ RestockItem:
     cmp al, '8'
     ja InvalidInputForRestock
 
-    sub al, 30h ; convert to integer
+    sub al, '0' ; convert to integer
     add al, al
     sub ax, 148
     mov StockID, ax
@@ -674,7 +672,7 @@ RestockItem:
     jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
     cmp al, '9'
     ja InvalidInputForRestock
-    sub al, 30h ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
+    sub al, '0' ; subtracts the ASCII value of '0' from the value read from the keyboard, effectively converting the character representing the quantity into its numerical value.
     sub ax, 256
     mov cx, ax
 
@@ -750,7 +748,7 @@ GenerateReport:
 
 ConfirmExit:
     ShowMsg EXIT_MSG
-    mov ah,01h
+    mov ah, 01h
     int 21h
     
     cmp al, 'n'
@@ -775,7 +773,7 @@ ReturnToMenu:
     ShowMsg ENTER_RETURN_MSG
     mov ah, 01h
     int 21h
-    cmp al, 0Dh ; 0Dh - carriage return
+    cmp al, 13 ; 0Dh - carriage return
     jne ReturnToMenu ; If the user did not press the Enter key, the code jumps to the ReturnToMenu label.
     ret ; returns to the calling function
 
@@ -789,13 +787,12 @@ CleanTerminal: ; Function to clear the screen
     ret
 
 ExitProgram:
-    mov ah,4Ch ; terminates the program
+    mov ah, 4Ch ; terminates the program
     int 21h
  
 ValidateQty:
     ; check if the word is less than or equal to 5
-    mov bx, ax ; Copies the value in the ax register (assuming it contains a 16-bit integer) into the bx register
-    cmp bx, 5 ; Compares the value in the bx register with the value 5
+    cmp ax, 5 ; Compares the value in the bx register with the value 5
     jle PrintRedBlink ; jle - jump if less than or equal to
     ret
 
@@ -806,24 +803,21 @@ PrintRedBlink:
     push bx
     push cx
     mov bx, dx ; set BX to the offset of the string
-    mov cx, 4  ; set the length to 4 characters
+    mov cx, 1  ; set the length to 4 characters
     xor bh, bh ; to ensure that the high byte of bx is clear before performing the loop operation
 
-    LoopForBlink:
-        mov dl, [bx] ; loads a character from memory at the address pointed to by bx into the dl register
-        mov ah, 09h ; write character and attribute at cursor position
-        mov al, dl ; The character loaded from memory is placed in the al register, preparing it for display. | the int 10h service requires the character to be displayed to be in the al register
-        mov bl, 04h ; bl is used to set the background color to red
-        or bl, 80h ; 80h = 10000000 | sets the high bit of the bl register to 1, potentially indicating a blinking attribute
-        int 10h ; display the character in al with the specified background color (black with blink)
-        inc bx ; increment offset to next character
-        xor bh, 80h ; This clears the high bit (bit 7) of the bh register, a common practice to ensure that the high byte is properly set
-        loop LoopForBlink ; repeat until all characters are printed
+    mov dl, [bx] ; loads a character from memory at the address pointed to by bx into the dl register
+    mov ah, 09h ; write character and attribute at cursor position
+    mov al, dl ; The character loaded from memory is placed in the al register, preparing it for display. | the int 10h service requires the character to be displayed to be in the al register
+    mov bl, 04h ; bl is used to set the background color to red
+    or bl, 80h ; 80h = 10000000 | sets the high bit of the bl register to 1, potentially indicating a blinking attribute
+    int 10h ; display the character in al with the specified background color (black with blink)
+    inc bx ; increment offset to next character
+    xor bh, 80h ; This clears the high bit (bit 7) of the bh register, a common practice to ensure that the high byte is properly set
 
-    DoneLoopingBlink:
-        pop cx ; restore registers
-        pop bx
-        pop ax
+    pop cx ; restore registers
+    pop bx
+    pop ax
     ret
 
 ValidateProfit:
