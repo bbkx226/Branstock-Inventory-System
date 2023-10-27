@@ -334,26 +334,26 @@ Tablets:
     call CleanTerminal
     ShowMsg TABLET_HEADER
 
-    mov bp, 0                ; Initialize the base pointer (bp) to 0
-    lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
+    mov bp, 0     
+    lea si, INVENTORY     
     
     LoopForTablets:
-        mov ax, [si]         ; Load the inventory ID into ax
-        cmp ax, 0            ; Compare the ID with 0
+        mov ax, [si] 
+        cmp ax, 0  
         je displayTablets   
 
-        mov ax, [si]         ; Reload the inventory ID into ax
-        cmp ax, 1            ; Compare the ID with 1 (Tab S9)
+        mov ax, [si]      
+        cmp ax, 1           
         je displayTablets       ; Jump to 'displayItem' if ID is 1 (Tab S9)
 
-        cmp ax, 9            ; Compare the ID with 9
-        ja DoneLoopingTablets ; Jump to 'done' if ID is greater than 9
+        cmp ax, 9       
+        ja DoneLoopingTablets
 
         jmp skipTablets    
 
     skipTablets:
-        add bp, 10            ; Add 10 to the base pointer to move to the next inventory name
-        add si, 2             ; Increment SI by 2 to point to the next word in the inventory array
+        add bp, 10          
+        add si, 2            
         jmp LoopForTablets         ; Jump back to the beginning of the loop for the next element
     
     displayTablets: 
@@ -387,34 +387,34 @@ Tablets:
 Phones:
     call CleanTerminal
     ShowMsg PHONE_HEADER
-    mov bp, 0                ; Initialize the base pointer (bp) to 0
-    lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
+    mov bp, 0              
+    lea si, INVENTORY      
     
     LoopForPhones:
-        mov ax, [si]         ; Load the inventory ID into ax
-        cmp ax, 5            ; Compare the ID with 0
+        mov ax, [si]
+        cmp ax, 5  
         je displayPhones   
 
-        mov ax, [si]         ; Reload the inventory ID into ax
+        mov ax, [si] 
         cmp ax, 6            
         je displayPhones    
 
-        mov ax, [si]         ; Reload the inventory ID into ax
+        mov ax, [si]  
         cmp ax, 7            
         je displayPhones     
 
-        mov ax, [si]         ; Reload the inventory ID into ax
+        mov ax, [si]
         cmp ax, 8            
         je displayPhones       
 
         cmp ax, 9
-        ja DoneLoopingPhones               ; Jump to 'done' if ID is greater than 9
+        ja DoneLoopingPhones             
 
         jmp skipPhones    
 
     skipPhones:
-        add bp, 10            ; Add 10 to the base pointer to move to the next inventory name
-        add si, 2             ; Increment SI by 2 to point to the next word in the inventory array
+        add bp, 10           
+        add si, 2           
         jmp LoopForPhones         ; Jump back to the beginning of the loop for the next element
 
     displayPhones: 
@@ -423,14 +423,14 @@ Phones:
         call GenerateTab
 
         mov dx, offset INVENTORY + 18  ; skip the first 20 bytes, which includes the IDs
-        add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
+        add dx, bp           
         call PrintString
 
         call GenerateTripleTab        
 
-        mov ax, [si + 108]    ; Load the inventory price into ax
+        mov ax, [si + 108]
         call ValidateQty
-        mov ax, [si + 108]    ; Load the inventory stock into ax
+        mov ax, [si + 108]
         call IntegerConversion
 
         call GenerateTripleTab          
@@ -450,26 +450,26 @@ Phones:
 Computers:
     call CleanTerminal
     ShowMsg COMPUTER_HEADER
-    mov bp, 0                ; Initialize the base pointer (bp) to 0
-    lea si, INVENTORY       ; Load the address of the INVENTORY data structure into si
+    mov bp, 0           
+    lea si, INVENTORY     
     
     LoopForComputers:
-        mov ax, [si]         ; Load the inventory ID into ax
-        cmp ax, 2            ; Compare the ID with 0
+        mov ax, [si]  
+        cmp ax, 2       
         je displayComputers   
 
-        mov ax, [si]         ; Reload the inventory ID into ax
-        cmp ax, 3            ; Compare the ID with 1 (Tab S9)
+        mov ax, [si]  
+        cmp ax, 3           
         je displayComputers         ; Jump to 'displayItem' if ID is 1 (Tab S9)
 
-        cmp ax, 9            ; Compare the ID with 9
-        ja DoneLoopingComputers               ; Jump to 'done' if ID is greater than 9
+        cmp ax, 9            
+        ja DoneLoopingComputers              
 
         jmp skipComputers    
 
     skipComputers:
-        add bp, 10            ; Add 10 to the base pointer to move to the next inventory name
-        add si, 2             ; Increment SI by 2 to point to the next word in the inventory array
+        add bp, 10          
+        add si, 2           
         jmp LoopForComputers         ; Jump back to the beginning of the loop for the next element
 
     displayComputers: 
@@ -478,14 +478,14 @@ Computers:
         call GenerateTab
 
         mov dx, offset INVENTORY + 18  ; skip the first 20 bytes, which includes the IDs
-        add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
+        add dx, bp 
         call PrintString
 
         call GenerateTripleTab        
 
-        mov ax, [si + 108]    ; Load the inventory price into ax
+        mov ax, [si + 108] 
         call ValidateQty
-        mov ax, [si + 108]    ; Load the inventory stock into ax
+        mov ax, [si + 108]
         call IntegerConversion
         
         call GenerateTripleTab        
@@ -506,8 +506,8 @@ LowInStock:
     call CleanTerminal
     ShowMsg INVENTORY_HEADER  ; Display the inventory header message
 
-    xor bp, bp               ; Initialize the base pointer (bp) to 0 | Equals to mov bp, 0
-    lea si, INVENTORY        ; Load the address of the INVENTORY data structure into si
+    xor bp, bp               ; Initialize the base pointer (bp) to 0
+    lea si, INVENTORY
 
     LoopLowInStockStart:
         mov ax, [si]          ; The square brackets are used to dereference the pointer, which means that the value at the memory address pointed to by the pointer is loaded into the ax register.
@@ -515,11 +515,11 @@ LowInStock:
         ja doneLoopLowStock   
         
         mov ax, [si + 108]
-        mov bx, ax ; Copies the value in the ax register (assuming it contains a 16-bit integer) into the bx register
-        cmp bx, 5 ; Compares the value in the bx register with the value 5
+        mov bx, ax
+        cmp bx, 5
         jle PrintLowInStock
         add bp, 10 ; Add 10 to the base pointer to move to the next inventory name
-        add si, 2 ; Increment SI by 2 to point to the next word in the inventory array
+        add si, 2 
         jmp LoopLowInStockStart
  
         PrintLowInStock:
@@ -528,14 +528,13 @@ LowInStock:
             call GenerateTab        ; Call a subroutine to print a tab character
 
             mov dx, offset INVENTORY + 18  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs | dx is also used to store the memory address of strings
-            add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
+            add dx, bp
             call PrintString
             
             call GenerateTripleTab
 
-            mov ax, [si + 108]    ; Load the inventory price into ax
+            mov ax, [si + 108]
             call ValidateQty
-            ; mov ax, [si + 120]    ; Load the inventory stock into ax
             call IntegerConversion
             
             call GenerateTripleTab        
@@ -546,7 +545,7 @@ LowInStock:
             call GenerateNewLine
 
             add bp, 10 ; Add 10 to the base pointer to move to the next inventory name
-            add si, 2 ; Increment SI by 2 to point to the next word in the inventory array
+            add si, 2 
             jmp LoopLowInStockStart
 
     doneLoopLowStock:
@@ -559,7 +558,7 @@ ViewItem:
     ShowMsg INVENTORY_HEADER  ; Display the inventory header message
 
     xor bp, bp               ; Initialize the base pointer (bp) to 0 | Equals to mov bp, 0
-    lea si, INVENTORY        ; Load the address of the INVENTORY data structure into si
+    lea si, INVENTORY
 
     LoopStart:
         mov ax, [si]          ; The square brackets are used to dereference the pointer, which means that the value at the memory address pointed to by the pointer is loaded into the ax register.
@@ -570,12 +569,12 @@ ViewItem:
         call GenerateTab        ; Call a subroutine to print a tab character
 
         mov dx, offset INVENTORY + 18  ; Take the offset address of TABLE | skip the first 20 bytes, which includes the IDs | dx is also used to store the memory address of strings
-        add dx, bp            ; Add the base pointer (bp) to dx to point to the next word
+        add dx, bp
         call PrintString
 
         call GenerateTripleTab
 
-        mov ax, [si + 108]    ; Load the inventory price into ax
+        mov ax, [si + 108]
         call ValidateQty
         call IntegerConversion
 
@@ -587,7 +586,7 @@ ViewItem:
         call GenerateNewLine
 
         add bp, 10 ; Add 10 to the base pointer to move to the next inventory name
-        add si, 2 ; Increment SI by 2 to point to the next word in the inventory array
+        add si, 2
         jmp LoopStart
 
     DoneLoopingItem:
@@ -619,7 +618,7 @@ SellItem:
     mov StockID, ax
 
     ShowMsg SELL_QUANTITY_MSG
-    mov ah, 0Ah
+    mov ah, 10
     mov dx, offset Quantity
     int 21h
     call ConvertStringToNumber
@@ -631,12 +630,12 @@ SellItem:
 
     lea si, INVENTORY
     add si, StockID
-    mov bx, [si] ; load stock into bx
+    mov bx, [si]
     sub bx, cx
     cmp bx, 0
-    js SellError ; If the quantity entered is greater than the quantity in stock, the code jumps to the SellError label | js is a conditional jump instruction that jumps if the sign flag is set (SF = 1)
+    js SellError
 
-    mov word ptr [si], bx
+    mov [si], bx
     mov ax, StockID
     sub ax, 120
     mov StockID, ax
@@ -670,7 +669,7 @@ RestockItem:
     ShowMsg RESTOCK_WARNING_MSG
     ShowMsg RESTOCK_OPTION_MSG
 
-    mov ah, 01
+    mov ah, 1
     int 21h
 
     CheckLowercaseForRestock:
@@ -681,7 +680,7 @@ RestockItem:
         je mainLoop
 
     cmp al, '0'
-    jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
+    jb InvalidInputForRestock
     cmp al, '8'
     ja InvalidInputForRestock
 
@@ -691,12 +690,12 @@ RestockItem:
     mov StockID, ax
 
     ShowMsg RESTOCK_QUANTITY_MSG
-    mov ah, 0Ah
+    mov ah, 10
     mov dx, offset Quantity
     int 21h
     call ConvertStringToNumber
     cmp ax, 0
-    jb InvalidInputForRestock ; If the user enters a value less than 0, the code jumps to the InvalidInput label.
+    jb InvalidInputForRestock 
     cmp ax, 99
     ja InvalidInputForRestock
     mov cx, ax
@@ -761,11 +760,11 @@ GenerateReport:
         call IntegerConversion
 
         ShowMsg CRLF
-        add si, 2 ; increment SI to point to the next word
         add bx, 2 
         add di, 2
+        add si, 2        
         add bp, 10
-        jmp LoopForReport ; repeat the loop for the next element
+        jmp LoopForReport
     
     DoneLoopingReport:
         ShowMsg TOTAL_PROFIT_MSG
@@ -796,18 +795,18 @@ ConfirmExit:
 
 ReturnToMenu:
     ShowMsg ENTER_RETURN_MSG
-    mov ah, 01h
+    mov ah, 01
     int 21h
     cmp al, 13 ; 0Dh - carriage return
-    jne ReturnToMenu ; If the user did not press the Enter key, the code jumps to the ReturnToMenu label.
+    jne ReturnToMenu
     ret ; returns to the calling function
 
 CleanTerminal: ; Function to clear the screen
-    mov ah, 06h ; scroll the screen up
+    mov ah, 6 ; scroll the screen up
     mov al, 0 ; clear the entire screen
-    mov bh, 07h ; di    splay attribute (white on black)
-    mov cx, 0 ; upper left corner (row 0, column 0)
-    mov dx, 184Fh ; lower right corner (row (18 hex) 24 dec, column (4F hex) 79 dec)
+    mov bh, 7 ; di splay attribute (white on black)
+    mov cx, 0 ; up per left corner (row 0, column 0)
+    mov dx, 184Fh ; lower right cor ner (row (18 hex) 24 dec, column (4F hex) 79 dec)
     int 10h ; call interrupt 10h to scroll the screen up
     ret
 
@@ -816,19 +815,16 @@ ExitProgram:
     int 21h
  
 ValidateQty:
-    ; check if the word is less than or equal to 5
-    cmp ax, 5 ; Compares the value in the bx register with the value 5
-    jle PrintRedBlink ; jle - jump if less than or equal to
+    cmp ax, 5
+    jle PrintRedBlink
     ret
 
 PrintRedBlink:
-    ; Print a string of characters
-    ; Input: CX = length of string, DX = offset of string
-    push ax ; save the values of the ax, bx, and cx registers onto the stack
+    push ax
     push bx
     push cx
-    mov bx, dx ; set BX to the offset of the string
-    mov cx, 1  ; set the length to 4 characters
+    mov bx, dx
+    mov cx, 1
     xor bh, bh ; to ensure that the high byte of bx is clear before performing the loop operation
 
     mov dl, [bx] ; loads a character from memory at the address pointed to by bx into the dl register
@@ -854,13 +850,12 @@ ValidateProfit:
     ret
 
 PrintGreenBlink:
-    ; Print a string of characters
-    ; Input: CX = length of string, DX = offset of string
+
     push ax ; save the values of the ax, bx, and cx registers onto the stack
     push bx
     push cx
-    mov bx, dx ; set BX to the offset of the string
-    mov cx, 5  ; set the length to 5 characters
+    mov bx, dx
+    mov cx, 5
     xor bh, bh ; to ensure that the high byte of bx is clear before performing the loop operation
 
     LoopForGreenBlink:
@@ -872,7 +867,7 @@ PrintGreenBlink:
         int 10h ; display the character in al with the specified background color (black with blink)
         inc bx ; increment offset to next character
         xor bh, 80h ; This clears the high bit (bit 7) of the bh register, a common practice to ensure that the high byte is properly set
-        loop LoopForGreenBlink ; repeat until all characters are printed
+        loop LoopForGreenBlink
 
     DoneLoopingGreenBlink:
         pop cx ; restore registers
@@ -887,72 +882,70 @@ IntegerConversion:
     xor cx, cx ; why clear cx? - to ensure that the counter is clear before performing the division operation
 
     LoopForConversion:
-        xor dx, dx ; clear the high byte of DX, to ensure that dx is clear before performing the division operation
-        div bx ; divide AX by BX
-        add dl, '0' ; convert the remainder to ASCII
-        push dx ; save the digit on the stack
-        inc cx ; increment the counter
-        cmp ax, 0 ; check if AX is zero
-        jne LoopForConversion ; if not, repeat the loop
+        xor dx, dx 
+        div bx 
+        add dl, '0'
+        push dx 
+        inc cx 
+        cmp ax, 0 
+        jne LoopForConversion
 
     DoneLoopingInteger:
-        pop dx ; get the next digit from the stack
-        mov ah, 02 ; write character
-        int 21h ; print the digit
-        dec cx ; decrement the counter
-        cmp cx, 0 ; check if all digits have been printed
-        jne DoneLoopingInteger ; if not, repeat the loop
-        pop bx ; restore BX from the stack
+        pop dx
+        mov ah, 2
+        int 21h
+        dec cx
+        cmp cx, 0
+        jne DoneLoopingInteger
+        pop bx
         ret
 
 PrintString:
     push ax
     push bx
     push cx
-    mov bx, dx ; set BX to the offset of the string
-    mov cx, 10 ; set the length to 10 characters
+    mov bx, dx
+    mov cx, 10
     
     LoopForPrinting:
-        mov dl, [bx] ; load character from memory
-        int 21h ; output the character
-        inc bx ; increment offset to next character
-        loop LoopForPrinting ; repeat until 10 characters are printed
+        mov dl, [bx]
+        int 21h 
+        inc bx
+        loop LoopForPrinting
     
     DoneLoopingString:
-        pop cx ; restore registers
+        pop cx
         pop bx
         pop ax
         ret
 
 GenerateNewLine:
     mov dl, 0ah ; ASCII value for new line
-    mov ah, 02 ; write character
+    mov ah, 2 ; write character
     int 21h
     ret
 
 GenerateTab:
-    mov dl, 09 ; dl is often used for storing the ASCII value of a tab character | ASCII value of tab character is 09
-    mov ah, 02
+    mov dl, 9 ; dl is often used for storing the ASCII value of a tab character | ASCII value of tab character is 09
+    mov ah, 2
     int 21h
     ret
 
 GenerateTripleTab:
-    mov dl, 09
-    mov ah, 02
+    mov dl, 9
+    mov ah, 2
     int 21h
 
-    mov dl, 09
-    mov ah, 02
+    mov dl, 9
+    mov ah, 2
     int 21h
 
-    mov dl, 09
-    mov ah, 02
+    mov dl, 9
+    mov ah, 2
     int 21h
     ret
 
-; Main Function
-; MAIN PROC is a function that is called when the program is executed.
-main proc
+    main proc
     mov ax, @Data ; ax is the only register that can be used to load the segment register | @Data represents the starting address of the data segment
     mov ds, ax ; ds register ensures that data accesses within the program use the correct segment
 
