@@ -945,7 +945,7 @@ GenerateTripleTab:
     int 21h
     ret
 
-    main proc
+main proc
     mov ax, @Data ; ax is the only register that can be used to load the segment register | @Data represents the starting address of the data segment
     mov ds, ax ; ds register ensures that data accesses within the program use the correct segment
 
